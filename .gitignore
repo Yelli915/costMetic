@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# env (secrets — never commit)
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js
+.next/
+out/
+
+# debug / OS
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Prisma
+# keep schema; migrations optional to commit
+
+# IDE
+.idea/
+.vscode/
+*.swp
