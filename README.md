@@ -1,101 +1,96 @@
-# Cosmetic Data Lifecycle Manager (CDLM)
-> **비정형 데이터의 구조화를 통한 스마트 소비 및 생애주기 관리 솔루션**
+# 💡 프로젝트 한 줄 요약
 
-사용자가 구매하는 화장품의 복잡한 구성을 AI와 정규표현식으로 정밀 분석하여 **실질 가성비**를 도출하고, **중복 구매 방지**부터 **폐기**까지의 전 과정을 데이터 중심으로 관리하는 풀스택 애플리케이션입니다.
-
----
-
-## Project Timeline
-- **Period**: 2026.04.05 ~ (진행 중)
-- **Role**: 1인 풀스택 (기획, UI/UX 디자인, 프론트엔드, 백엔드, DB 설계)
+> 비정형 화장품 데이터를 **AI와 정규표현식(Hybrid Parsing)**으로 구조화하고, 구매부터 폐기까지의 **데이터 중심 생애 주기**를 관리하는 풀스택 애플리케이션
 
 ---
 
-## Tech Stack
+## 1. Project Overview
 
-### Frontend & Backend
-- **Framework**: `Next.js 15 (App Router)`, `TypeScript`
-- **State Management**: `Zustand`
-- **Styling**: `Tailwind CSS`
-- **Visualization**: `Recharts`
-- **ORM & DB**: `Prisma`, `Supabase (PostgreSQL)`
+| **구분** | **내용** |
+| --- | --- |
+| **Role** | 1인 풀스택 (기획, 디자인, 프론트엔드, 백엔드, DB 설계) |
+| **Period** | 2026.04.05 ~ 2026.05.10 |
+| **Tech Stack** | **FE:** Next.js (App Router), TypeScript, Zustand, Tailwind, Recharts / **BE:** Next.js API Routes, Gemini 1.5 Flash, Google Vision API / **DB:** Supabase (PostgreSQL), Prisma |
+| **Data Source** | 식약처 공공데이터 API, 주요 이커머스 JSON-LD 및 Open Graph 메타데이터 |
 
-### AI & Data Processing
-- **LLM**: `Gemini 1.5 Flash` (비정형 데이터 파싱 및 의미론적 분석)
-- **Vision**: `Google Vision API` (영수증 OCR 및 좌표 기반 매칭)
-- **Validation**: `Zod` (데이터 무결성 검증)
+### Market Positioning (Strategic Gap Filling)
 
----
-
-## Key Technical Features
-
-### 1. AI Hybrid Pricing Engine
-단순 가격 비교를 넘어, 증정품과 추가 구성을 포함한 **실질 1ml/1g당 단가**를 산출합니다.
-- **Regex-First Strategy**: "1+1", "50ml+15ml" 등 정형화된 패턴은 정규표현식으로 즉시 처리(평균 0.1s).
-- **LLM Fallback**: 분석이 어려운 복잡 문구만 Gemini 1.5 Flash에 할당하여 **API 비용 72% 절감**.
-- **Accuracy**: 자체 테스트 100건 기준 데이터 추출 성공률 **96% 달성**.
-
-### 2. Intelligent Color-Matching Alert
-립스틱, 파운데이션 등 색조 제품의 중복 구매를 방지하기 위해 단순 RGB 비교가 아닌 인간의 시각적 인지 차이를 반영하는 **CIEDE2000($\Delta E_{00}$)** 알고리즘을 적용했습니다.
-- **Algorithm**: 
-$$\Delta E_{00} = \sqrt{\left(\frac{\Delta L'}{k_L S_L}\right)^2 + \left(\frac{\Delta C'}{k_C S_C}\right)^2 + \left(\frac{\Delta H'}{k_H S_H}\right)^2 + R_T \left(\frac{\Delta C'}{k_C S_C}\right) \left(\frac{\Delta H'}{k_H S_H}\right)}$$
-- **Feature**: 유사도 수치가 $\Delta E < 5$ 이하일 경우, 기존 보유 제품과 흡사하다는 경고 알림을 송출하여 불필요한 지출을 방지합니다.
-
-### 3. OCR Receipt to Inventory
-영수증 사진 한 장으로 제품명과 결제 금액을 자동 매칭합니다.
-- **Spatial Analysis**: 텍스트의 Y좌표 인접도 기반 알고리즘을 사용하여 품목과 가격의 상관관계를 분석하고 인벤토리에 자동 등록합니다.
+- **화해 대비:** 단순 성분 조회를 넘어, 사용자가 보유한 제품 간의 **스펙(용량/가격) 비교 및 중복 구매 방지**에 특화.
+- **네이버쇼핑 대비:** 단순 최저가가 아닌, AI 분석을 통해 '증정품/추가 구성'을 포함한 **실질 1ml당 단가** 산출.
+- **기존 관리 앱 대비:** 수동 입력의 번거로움을 **AI OCR 및 메타데이터 자동 파싱**으로 자동화하여 진입장벽 제거.
 
 ---
 
-## System Architecture
+## 2. System Architecture
 
-```mermaid
-graph TD
-    A[사용자 입력: URL/영수증] --> B{Data Extractor}
-    B -->|1차: Metadata| C[JSON-LD / OG Tag]
-    B -->|2차: Pattern| D[Regex Engine]
-    B -->|3차: Semantic| E[Gemini 1.5 Flash]
-    C & D & E --> F[Zod Validation]
-    F --> G[(Supabase DB)]
-    G --> H[Next.js Dashboard]
+### High-Level Architecture
+
+단순 CRUD를 넘어, 데이터의 흐름과 안정성을 최우선으로 고려한 설계를 적용했습니다.
+
+### Core Logic: Multi-Layer Data Extraction Pipeline
+
+외부 커머스 사이트의 차단을 피하고 데이터 정확도를 확보하기 위한 4단계 공정입니다.
+
+```
+사용자 상품 링크 입력
+    → 1단계: Open Graph 메타데이터 추출 (상품명/이미지)
+    → 2단계: JSON-LD 구조화 데이터 탐색 (가격/브랜드)
+    → 3단계: Gemini AI 의미론적 분석 (용량/증정품 구성 파싱)
+    → 4단계: Human-in-the-loop 사용자 최종 확인 → DB 저장 및 단위 가격 산출
 ```
 
 ---
 
-## Troubleshooting & Growth
+## 3. Key Features & Technical Specs
 
-### 1. AI 응답 지연 및 비용 문제 해결
-- **문제**: 모든 요청을 AI로 처리할 경우 응답 속도(Avg. 3s)와 토큰 비용이 선형적으로 증가.
-- **해결**: 데이터의 80%가 일정한 패턴을 가진다는 점에 착안, **Regex 모듈**을 앞단에 배치하고 실패 시에만 AI를 호출하는 **Fallback 파이프라인** 설계.
-- **성과**: 전체 프로세스 평균 속도를 **0.5초 이내**로 개선 및 운영 비용 최적화.
+### ① AI Hybrid Pricing Engine (단위 가격 분석기)
 
-### 2. 데이터 획득의 법적 안정성 확보
-- **문제**: 타 커머스 사이트 크롤링 시 발생할 수 있는 `robots.txt` 위반 및 법적 리스크.
-- **해결**: 기술적 우회 대신 웹 표준인 **JSON-LD(구조화 데이터)**와 **Open Graph**를 활용하여 합법적으로 공개된 데이터만을 수집하도록 설계.
-- **성과**: 서비스의 지속 가능성을 확보하고, 불확실한 데이터는 사용자 확인(`Human-in-the-loop`) 단계를 거쳐 데이터 무결성을 유지.
+- **Problem:** "1+1", "본품 50ml+증정 15ml" 등 복잡한 구성으로 인해 실제 가성비 판단이 어려움.
+- **Solution:** **정규표현식(Regex)**으로 표준 규격(ml, g)을 1차 스캐닝하고, 분석이 어려운 비정형 문구는 **Gemini 1.5 Flash**를 활용해 의미론적 파싱 수행.
+- **Why This Design:** 모든 데이터를 AI로 처리할 경우 응답 지연 및 비용 급증이 불가피하므로, 패턴이 명확한 데이터는 Regex로 즉시 처리하고 복잡한 비정형 데이터만 AI에 위임하는 **Fallback 구조**를 설계. API 호출을 최소화하면서 파싱 정확도를 유지하는 것이 핵심 설계 목표.
 
----
+### ② Intelligent Inventory & Color Alert
 
-## Project Structure
-```text
-src/
-├── app/              # Next.js App Router (Server Actions 포함)
-├── components/       # Reusable UI (Radix UI, Recharts)
-├── hooks/            # Business Logic Custom Hooks
-├── lib/              
-│    ├── parser/      # Hybrid Parsing Engine (Regex + Gemini)
-│    ├── color/       # CIEDE2000 Logic
-│    └── prisma.ts    # Prisma Client
-└── schemas/          # Zod Validation Schemas
-```
+- **OCR 매칭:** Google Vision API로 영수증의 텍스트 좌표를 분석, '품목명'과 '결제 금액'을 인접도 기반 알고리즘으로 매칭하여 자동 등록.
+- **Color Matching 알고리즘:** 립스틱, 파운데이션 등 색조 제품 등록 시, **CIEDE2000(Delta E)** 공식을 활용해 기존 보유 제품과 색상 유사도를 비교.
+
+> **Why This Design:** 단순 RGB 비교는 인간의 시각적 인지와 괴리가 크기 때문에, 인간의 색 지각 차이를 수치화한 Delta E 알고리즘을 선택. 유사도가 일정 임계값(ΔE < 5) 이하일 경우 중복 구매 경고를 송출하는 구조로 설계.
 
 ---
 
-## Roadmap
-- [ ] Phase 1: 가성비 분석 엔진 및 Next.js API Route 최적화
-- [ ] Phase 2: 영수증 OCR 고도화 및 인벤토리 자동 등록 기능
-- [ ] Phase 3: CIEDE2000 기반 색상 유사도 분석 엔진 및 시각화 대시보드
-- [ ] Phase 4: 유통기한(PAO) 기반 푸시 알림 및 Vercel 배포
+## 4. Trouble Shooting (성장 기록)
+
+### Issue 1: AI API 비용 및 응답 속도 최적화
+
+- **상황:** 모든 데이터를 AI로 처리할 경우, 외부 API 특성상 응답 지연 및 토큰 비용 급증이 구조적으로 불가피한 문제.
+- **해결:** 패턴이 일정한 데이터(약 80%)는 **Regex** 모듈로 즉시 처리하고, 복잡한 비정형 데이터만 AI에 할당하는 **Fallback 구조** 설계.
+- **설계 목표:** AI 호출 빈도를 최소화하여 비용을 통제하고, 전체 파싱 프로세스의 응답 속도를 사용자가 체감하지 못하는 수준으로 유지.
+
+### Issue 2: 데이터 획득의 윤리성 및 법적 리스크
+
+- **상황:** 대형 커머스사의 크롤링 차단 정책으로 인한 데이터 확보의 기술적·법적 한계.
+- **해결:** 기술적 우회 대신, 합법적으로 공개된 **Open Graph**와 **JSON-LD** 메타데이터를 우선 활용하여 `robots.txt` 준수.
+- **설계 목표:** 법적 안정성을 확보하는 동시에, 데이터 불확실성 발생 시 **Human-in-the-loop** UI를 통해 사용자가 최종 검수하도록 강제하여 데이터 무결성 유지.
 
 ---
-**2026.04.05** 프로젝트 시작. 정교한 데이터 모델링과 사용자 경험을 최우선으로 개발하고 있습니다.
+
+## 5. Project Roadmap (Current Status)
+
+### 현재 상태 (In Progress)
+
+- Next.js (App Router) + TypeScript + Tailwind CSS 기반 환경 구축 완료
+- 프로젝트 아키텍처 설계 및 DB 스키마 모델링 완료
+
+### Phase 1: 가성비 분석 엔진 (Roadmap)
+
+- **Smart Link Fetcher:** 상품 URL에서 Open Graph 및 JSON-LD 구조화 데이터 자동 추출. Next.js Server Actions를 통한 API Key 보안 캡슐화.
+- **Hybrid Parsing Engine:** 패턴이 명확한 데이터(80%)는 Regex로 즉시 처리, 비정형 문구(20%)만 Gemini AI에 위임하는 Fallback 구조.
+- **데이터 검증 파이프라인:** Zod 스키마를 활용한 AI 응답 구조화 및 유효성 검증.
+- **단위 가격 산출:** 증정품·묶음 구성을 포함한 실질 총 용량 기반 1ml당 가격 계산 및 가성비 랭킹 알고리즘 구현.
+- **Human-in-the-loop UX:** AI 분석 불확실 값을 사용자가 직접 검수·수정하는 인터페이스.
+
+### Phase 2: 인벤토리 및 생애주기 관리 (Roadmap)
+
+- **OCR 자동 등록:** 영수증 좌표 기반 품목-가격 매칭 알고리즘으로 보유 제품 일괄 등록.
+- **알림 시스템:** 권장 사용 기간(PAO) 데이터 기반 유통기한 D-Day 푸시 알림.
+- **시각화 대시보드:** Recharts를 이용한 월별 지출 패턴 및 카테고리별 보유 현황.
